@@ -8,6 +8,7 @@
 #include "../file_source.hpp"
 #include "offline_region.hpp"
 #include "offline_region_definition.hpp"
+#include "../java_types.hpp"
 
 
 namespace mbgl {
@@ -40,6 +41,18 @@ public:
                             mbgl::optional<mbgl::OfflineRegion>);
     };
 
+    class MergeOfflineRegionsCallback {
+    public:
+        static constexpr auto Name() { return "com/mapbox/mapboxsdk/offline/OfflineManager$MergeOfflineRegionsCallback";}
+
+        static void onError(jni::JNIEnv&, const jni::Object<OfflineManager::MergeOfflineRegionsCallback>&, std::exception_ptr);
+
+        static void onMerge(jni::JNIEnv&,
+                            const jni::Object<FileSource>&,
+                            const jni::Object<MergeOfflineRegionsCallback>&,
+                            mbgl::optional<std::vector<mbgl::OfflineRegion>>);
+    };
+
     static constexpr auto Name() { return "com/mapbox/mapboxsdk/offline/OfflineManager"; };
 
     static void registerNative(jni::JNIEnv&);
@@ -56,6 +69,11 @@ public:
                              const jni::Object<OfflineRegionDefinition>& definition,
                              const jni::Array<jni::jbyte>& metadata,
                              const jni::Object<OfflineManager::CreateOfflineRegionCallback>& callback);
+
+    void mergeOfflineRegions(jni::JNIEnv&,
+                             const jni::Object<FileSource>&,
+                             const jni::String&,
+                             const jni::Object<MergeOfflineRegionsCallback>&);
 
 private:
     mbgl::DefaultFileSource& fileSource;

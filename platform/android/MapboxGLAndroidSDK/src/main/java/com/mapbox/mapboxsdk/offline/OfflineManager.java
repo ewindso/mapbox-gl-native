@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
+
 import com.mapbox.mapboxsdk.LibraryLoader;
 import com.mapbox.mapboxsdk.MapStrictMode;
 import com.mapbox.mapboxsdk.R;
@@ -92,6 +93,13 @@ public class OfflineManager {
     void onError(String error);
   }
 
+  @Keep
+  public interface MergeOfflineRegionsCallback {
+    void onMerge(OfflineRegion[] offlineRegions);
+
+    void onError(String error);
+  }
+
   /*
    * Constructor
    */
@@ -172,6 +180,33 @@ public class OfflineManager {
 
       @Override
       public void onError(final String error) {
+        getHandler().post(new Runnable() {
+          @Override
+          public void run() {
+            fileSource.deactivate();
+            callback.onError(error);
+          }
+        });
+      }
+    });
+  }
+
+  public void mergeOfflineRegions(@NonNull String path, @NonNull final MergeOfflineRegionsCallback callback) {
+    fileSource.activate();
+    mergeOfflineRegions(fileSource, path, new MergeOfflineRegionsCallback() {
+      @Override
+      public void onMerge(OfflineRegion[] offlineRegions) {
+        getHandler().post(new Runnable() {
+          @Override
+          public void run() {
+            fileSource.deactivate();
+            callback.onMerge(offlineRegions);
+          }
+        });
+      }
+
+      @Override
+      public void onError(String error) {
         getHandler().post(new Runnable() {
           @Override
           public void run() {
@@ -272,4 +307,6 @@ public class OfflineManager {
   private native void createOfflineRegion(FileSource fileSource, OfflineRegionDefinition definition,
                                           byte[] metadata, CreateOfflineRegionCallback callback);
 
+  @Keep
+  private native void mergeOfflineRegions(FileSource fileSource, String path, MergeOfflineRegionsCallback callback);
 }
